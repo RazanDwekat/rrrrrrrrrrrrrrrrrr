@@ -1,11 +1,11 @@
 package com.example.projectsoftware;
 
 import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextInputDialog;
 
 import javafx.scene.control.Label;
-import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -25,7 +25,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import javafx.scene.Scene;
-import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
@@ -39,19 +38,18 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.stage.FileChooser;
 
 import java.awt.image.BufferedImage;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -78,7 +76,7 @@ import javafx.embed.swing.SwingFXUtils;
 
 
 
-public class HelloController {
+public class HelloController implements Initializable {
 
     static Logger logger = Logger.getLogger(com.example.projectsoftware.HelloController.class.getName());
 
@@ -1143,6 +1141,16 @@ public class HelloController {
 
     @FXML
     void adminusers(ActionEvent event) {
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource("PackageAdmin.fxml"));
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.show();
+        } catch (IOException e) {
+            // Log the exception
+            logger.log(Level.SEVERE, "An error occurred while opening a new window:", e);
+        }
 
     }
 
@@ -1684,6 +1692,7 @@ public class HelloController {
 
     public void initialize() {
         populateHallChoiceBox();
+        populateEventChoiceBox();
         r9.setItems(FXCollections.observableArrayList("16:00:00", "20:00:00", "18:00:00", "22:00:00", "24:00:00"));
 
         // Set the default value for ChoiceBox r9 (optional)
@@ -3788,6 +3797,7 @@ public class HelloController {
     private Button x3;
     private File selectedFile;
     private byte[] imageBytes;
+
     @FXML
     void uploadimageevents(ActionEvent event) {
         // Allow the user to select an image file
@@ -3808,7 +3818,6 @@ public class HelloController {
             }
         }
     }
-
 
 
     @FXML
@@ -3928,7 +3937,7 @@ public class HelloController {
                 throw new RuntimeException(e);
             }
         } else {
-           showAlert("Please select a hall.");
+            showAlert("Please select a hall.");
             // You may want to show a message to the user indicating that they need to select a hall
         }
     }
@@ -3937,6 +3946,7 @@ public class HelloController {
     void cancleevents(ActionEvent event) {
         showTicketDialog();
     }
+
     private void showTicketDialog() {
         // Create controls for ticket input
         TextField ticketTypeField = new TextField();
@@ -3988,7 +3998,7 @@ public class HelloController {
         String password = "1482003";
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
             // SQL query to insert ticket data
-            String sql = "INSERT INTO software.tickets (ticket_type, price, available_quantity, start_date, end_date, event_id) " +
+            String sql = "INSERT INTO software.tickets (ticket_type, price, available_quantity, start_date, end_date, event_name) " +
                     "VALUES (?, ?, ?, ?, ?, ?)";
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 // Set parameters
@@ -4032,23 +4042,22 @@ public class HelloController {
     }
 
 
-
     @FXML
     private Button x10;
     @FXML
-    private ChoiceBox<String> r8=new ChoiceBox<>();
+    private ChoiceBox<String> r8 = new ChoiceBox<>();
     @FXML
-    private ChoiceBox<String> r10=new ChoiceBox<>();
+    private ChoiceBox<String> r10 = new ChoiceBox<>();
 
     @FXML
-    private ChoiceBox<String> r9=new ChoiceBox<>();
+    private ChoiceBox<String> r9 = new ChoiceBox<>();
 
 
     @FXML
-    private TableColumn<Event,Timestamp> creationdate;
+    private TableColumn<Event, Timestamp> creationdate;
 
     @FXML
-    private TableColumn<Event, String > eventdescription;
+    private TableColumn<Event, String> eventdescription;
 
     @FXML
     private TableColumn<Event, Integer> eventhallid;
@@ -4060,7 +4069,7 @@ public class HelloController {
     private TableColumn<Event, byte[]> eventimage;
 
     @FXML
-    private TableColumn<Event, String > eventlocation;
+    private TableColumn<Event, String> eventlocation;
 
     @FXML
     private TableColumn<Event, Integer> eventorgid;
@@ -4075,66 +4084,68 @@ public class HelloController {
     private TableView<Event> eventsviewtable;
     @FXML
     private Button bbbbbb;
+
     @FXML
     void eventsshow(ActionEvent event) {
         try (Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/postgres", "postgres", "1482003")) {
 
             int userId = getUserId(UserCredentials.getEmail(), UserCredentials.getPassword(), conn);
 
-        if (userId != -1) {
-            String sql = "SELECT e.event_id, e.event_name, e.event_date, e.location, e.description, e.organizer_id, e.creation_date, e.hallid \n" +
-                    "FROM software.events e\n" +
-                    "JOIN software.halls h ON e.hallid = h.hallid\n" +
-                    "WHERE h.userid = ?";
+            if (userId != -1) {
+                String sql = "SELECT e.event_id, e.event_name, e.event_date, e.location, e.description, e.organizer_id, e.creation_date, e.hallid \n" +
+                        "FROM software.events e\n" +
+                        "JOIN software.halls h ON e.hallid = h.hallid\n" +
+                        "WHERE h.userid = ?";
 
-            try (PreparedStatement statement = conn.prepareStatement(sql)) {
-                statement.setInt(1, userId); // Using the userId obtained directly
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    ArrayList<Event> reservations = new ArrayList<>();
-                    while (resultSet.next()) {
-                        int eventId = resultSet.getInt("event_id");
-                        String eventName = resultSet.getString("event_name");
-                        Date eventDate = resultSet.getDate("event_date");
-                        String location = resultSet.getString("location");
-                        String description = resultSet.getString("description");
-                        int organizerId = resultSet.getInt("organizer_id");
-                        Timestamp creationDate = resultSet.getTimestamp("creation_date");
-                      //  byte[] image = resultSet.getBytes("image");
-                        int hallId = resultSet.getInt("hallid");
+                try (PreparedStatement statement = conn.prepareStatement(sql)) {
+                    statement.setInt(1, userId); // Using the userId obtained directly
+                    try (ResultSet resultSet = statement.executeQuery()) {
+                        ArrayList<Event> reservations = new ArrayList<>();
+                        while (resultSet.next()) {
+                            int eventId = resultSet.getInt("event_id");
+                            String eventName = resultSet.getString("event_name");
+                            Date eventDate = resultSet.getDate("event_date");
+                            String location = resultSet.getString("location");
+                            String description = resultSet.getString("description");
+                            int organizerId = resultSet.getInt("organizer_id");
+                            Timestamp creationDate = resultSet.getTimestamp("creation_date");
+                            //  byte[] image = resultSet.getBytes("image");
+                            int hallId = resultSet.getInt("hallid");
 
-                        // Create Event object and add it to the TableView
-                      reservations.add(new Event(eventId, eventName, eventDate, location, description, organizerId, creationDate,  hallId));
+                            // Create Event object and add it to the TableView
+                            reservations.add(new Event(eventId, eventName, eventDate, location, description, organizerId, creationDate, hallId));
 
+                        }
+                        eventid.setCellValueFactory(new PropertyValueFactory<>("eventId"));
+                        eventsname.setCellValueFactory(new PropertyValueFactory<>("eventName"));
+                        eventdescription.setCellValueFactory(new PropertyValueFactory<>("description"));
+                        eventlocation.setCellValueFactory(new PropertyValueFactory<>("location"));
+                        eventsdate.setCellValueFactory(new PropertyValueFactory<>("eventDate"));
+                        eventorgid.setCellValueFactory(new PropertyValueFactory<>("organizerId"));
+                        creationdate.setCellValueFactory(new PropertyValueFactory<>("creationDate"));
+                        //  eventsimage.setCellValueFactory(new PropertyValueFactory<>("image"));
+                        eventhallid.setCellValueFactory(new PropertyValueFactory<>("hallId"));
+
+
+                        // Clear existing data in the TableView
+                        eventsviewtable.getItems().clear();
+
+                        // Populate TableView
+                        eventsviewtable.getItems().addAll(reservations);
                     }
-                    eventid.setCellValueFactory(new PropertyValueFactory<>("eventId"));
-                    eventsname.setCellValueFactory(new PropertyValueFactory<>("eventName"));
-                    eventdescription.setCellValueFactory(new PropertyValueFactory<>("description"));
-                    eventlocation.setCellValueFactory(new PropertyValueFactory<>("location"));
-                    eventsdate.setCellValueFactory(new PropertyValueFactory<>("eventDate"));
-                    eventorgid.setCellValueFactory(new PropertyValueFactory<>("organizerId"));
-                    creationdate.setCellValueFactory(new PropertyValueFactory<>("creationDate"));
-                  //  eventsimage.setCellValueFactory(new PropertyValueFactory<>("image"));
-                    eventhallid.setCellValueFactory(new PropertyValueFactory<>("hallId"));
-
-
-                    // Clear existing data in the TableView
-                    eventsviewtable.getItems().clear();
-
-                    // Populate TableView
-                    eventsviewtable.getItems().addAll(reservations);
                 }
+            } else {
+                System.out.println("User not found!");
             }
-        } else {
-            System.out.println("User not found!");
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
 
     }
 
     @FXML
     private Button bnbn;
+
     @FXML
     void gotoevent(ActionEvent event) {
         try {
@@ -4155,8 +4166,339 @@ public class HelloController {
     }
 
 
+    @FXML
+    private ChoiceBox<Event> Eventname = new ChoiceBox<Event>();
+
+    @FXML
+    private TextField avqu;
+
+    @FXML
+    private Button buyyiinngg;
+
+    @FXML
+    private Button cancllleeee;
+
+    @FXML
+    private TextField entxt;
+
+    @FXML
+    private TextField pricece;
+
+    @FXML
+    private ChoiceBox<String> quantity = new ChoiceBox<>();
+
+    @FXML
+    private ChoiceBox<String> tickettype = new ChoiceBox<>();
+
+    @FXML
+    private TextField tickittype;
+
+    @FXML
+    private TextField totalpavailability;
+
+    private void populateEventChoiceBox() {
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+            String query = "SELECT event_id, event_name, event_date FROM software.events";
+            PreparedStatement statement = conn.prepareStatement(query);
+            ResultSet resultSet = statement.executeQuery();
+
+            ObservableList<Event> events = FXCollections.observableArrayList();
+            while (resultSet.next()) {
+                int eventId = resultSet.getInt("event_id");
+                String eventName = resultSet.getString("event_name");
+                LocalDate eventDate = resultSet.getDate("event_date").toLocalDate();
+                events.add(new Event(eventId, eventName, eventDate));
+            }
+
+            Eventname.setItems(events);
+
+            resultSet.close();
+            statement.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    void handleEventSelection(MouseEvent event) {
+        Event selectedEvent = Eventname.getValue();
+        if (selectedEvent != null) {
+            populateTicketChoiceBox(selectedEvent.getEventName()); // Pass event name instead of event ID
+        }
+    }
+
+    private void populateTicketChoiceBox(String eventName) {
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+            String ticketQuery = "SELECT ticket_type, price FROM software.tickets WHERE event_name = ?";
+            PreparedStatement ticketStatement = conn.prepareStatement(ticketQuery);
+            ticketStatement.setString(1, eventName);
+            ResultSet resultSet = ticketStatement.executeQuery();
+
+            ObservableList<String> tickets = FXCollections.observableArrayList();
+            while (resultSet.next()) {
+                String ticketType = resultSet.getString("ticket_type");
+                double price = resultSet.getDouble("price");
+                String ticketInfo = ticketType + " - $" + price; // Format ticket information
+                tickets.add(ticketInfo);
+
+            }
+
+            tickettype.setItems(tickets);
+
+            resultSet.close();
+            ticketStatement.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    void buying(ActionEvent event) {
+
+    }
+
+    @FXML
+    void canclebuu(ActionEvent event) {
+
+    }
 
 
+    @FXML
+    private Button Ticketcu;
+
+    @FXML
+    void customerTicket(ActionEvent event) {
+        try {
+            Parent root;
+
+            root = FXMLLoader.load(getClass().getResource("reservetecket.fxml"));
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            Scene scene;
+            scene = new Scene(root);
+            stage.setScene(scene);
+            stage.show();
+
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public void ticketclick(MouseEvent mouseEvent) {
+    }
+
+
+    @FXML
+    private TextField des;
+
+    @FXML
+    private TableColumn<packge, String> descriptionColumn;
+
+    @FXML
+    private Button discounttt;
+
+    @FXML
+    private Button f;
+
+    @FXML
+    private Button ff;
+
+    @FXML
+    private TableColumn<packge, String> includesColumn;
+
+    @FXML
+    private TextField innc;
+
+    @FXML
+    private TableColumn<packge, Integer> maxGuestsColumn;
+
+    @FXML
+    private TextField mguest;
+
+    @FXML
+    private TableColumn<packge, Integer> packageIdColumn;
+
+    @FXML
+    private TextField pid;
+
+    @FXML
+    private TextField pname;
+
+    @FXML
+    private TableColumn<packge, String> pnameecolumn;
+
+    @FXML
+    private TextField price;
+
+    @FXML
+    private TableColumn<packge, Double> priceColumn;
+
+    @FXML
+    private Button showwwwwwwwwwww;
+
+    @FXML
+    private TableView<packge> tableeee=new TableView<>();
+
+    @FXML
+    void deleteepac(ActionEvent event) {
+
+
+    }
+
+    @FXML
+    void getadd(ActionEvent event) {
+        try {
+            Parent root;
+
+            root = FXMLLoader.load(getClass().getResource("Addpackage.fxml"));
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            Scene scene;
+            scene = new Scene(root);
+            stage.setScene(scene);
+            stage.show();
+
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    @FXML
+    void getdiss(ActionEvent event) {
+
+    }
+
+    @FXML
+    void getshow(ActionEvent event) {
+        ObservableList<packge> data = FXCollections.observableArrayList();
+        try {
+            Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/postgres", "postgres", "1482003");
+            String query = "SELECT * FROM software.wedding_packages";
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                int packageId = resultSet.getInt("package_id");
+                String packageName = resultSet.getString("package_name");
+                String description = resultSet.getString("description");
+                double price = resultSet.getDouble("price");
+                int maxGuests = resultSet.getInt("max_guests");
+                String includes = resultSet.getString("includes");
+
+                // Assuming includes is stored as a comma-separated string in the database
+                String[] includesArray = includes.split(",");
+
+                data.add(new packge(packageId, packageName, description, price, maxGuests, includesArray));
+            }
+
+            packageIdColumn.setCellValueFactory(new PropertyValueFactory<>("packageId"));
+            pnameecolumn.setCellValueFactory(new PropertyValueFactory<>("packageName"));
+            descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+            priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
+            maxGuestsColumn.setCellValueFactory(new PropertyValueFactory<>("maxGuests"));
+            includesColumn.setCellValueFactory(new PropertyValueFactory<>("includes"));
+
+            tableeee.setItems(data);
+
+            resultSet.close();
+            preparedStatement.close();
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        // Define a row click event handler for the TableView
+        tableeee.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 1) { // Check if it's a single click
+                // Get the selected row
+                packge selectedPackage = tableeee.getSelectionModel().getSelectedItem();
+
+                // Set the values of selected package to TextFields
+                if (selectedPackage != null) {
+                    pid.setText(String.valueOf(selectedPackage.getPackageId()));
+                    pname.setText(selectedPackage.getPackageName());
+                    des.setText(selectedPackage.getDescription());
+                    price.setText(String.valueOf(selectedPackage.getPrice()));
+                    mguest.setText(String.valueOf(selectedPackage.getMaxGuests()));
+                    // Join includesArray into a single string and set it to innc TextField
+                    innc.setText(String.join(",", selectedPackage.getIncludes()));
+                }
+            }
+        });
+
+    }
+
+    @FXML
+    private Button ppadd;
+
+    @FXML
+    private TextField ppdesc;
+
+    @FXML
+    private TextField ppid;
+
+    @FXML
+    private TextField ppincludes;
+
+    @FXML
+    private TextField ppmax;
+
+    @FXML
+    private TextField ppname;
+
+    @FXML
+    private TextField ppprice;
+
+    @FXML
+    void getppadd(ActionEvent event) {
+        try {
+            // Establish database connection
+            Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/postgres", "postgres", "1482003");
+
+            // Prepare insert statement
+            String query = "INSERT INTO software.wedding_packages (package_id, package_name, description, price, max_guests, includes) VALUES (?, ?, ?, ?, ?, ?)";
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+
+            // Set values from TextFields
+            preparedStatement.setInt(1, Integer.parseInt(ppid.getText()));
+            preparedStatement.setString(2, ppname.getText());
+            preparedStatement.setString(3, ppdesc.getText());
+            preparedStatement.setDouble(4, Double.parseDouble(ppprice.getText()));
+            preparedStatement.setInt(5, Integer.parseInt(ppmax.getText()));
+
+// Split the string input for includes and convert to array
+            String[] includesArray = ppincludes.getText().split(","); // Assuming the includes are comma-separated
+            Array array = connection.createArrayOf("text", includesArray);
+            preparedStatement.setArray(6, array);
+
+            // Execute the insert statement
+            int rowsInserted = preparedStatement.executeUpdate();
+            showAlert("package added successfully");
+
+            if (rowsInserted > 0) {
+                // If insertion was successful, clear the TextFields
+                ppid.clear();
+                ppname.clear();
+                ppdesc.clear();
+                ppprice.clear();
+                ppmax.clear();
+                ppincludes.clear();
+            }
+
+            // Close resources
+            preparedStatement.close();
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+}
+
+    }
 }
 
 

@@ -1,6 +1,7 @@
 package com.example.projectsoftware;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.Date;
 
 public class Event {
@@ -13,6 +14,8 @@ public class Event {
     private Timestamp creationDate;
     private byte[] image;
     private int hallId;
+    private LocalDate date;
+
 
     // Constructor
     public Event(int eventId, String eventName, Date eventDate, String location, String description, int organizerId, Timestamp creationDate, byte[] image, int hallId) {
@@ -26,6 +29,22 @@ public class Event {
         this.image = image;
         this.hallId = hallId;
     }
+
+    public Event(int id, String name, LocalDate date) {
+        this.eventId = id;
+        this.eventName = name;
+        this.date = date;
+    }
+
+    @Override
+    public String toString() {
+        if (date != null) {
+            return eventName + " - " + date.toString();
+        } else {
+            return eventName + " - No date available";
+        }
+    }
+
     public Event(int eventId, String eventName, Date eventDate, String location, String description, int organizerId, Timestamp creationDate, int hallId) {
         this.eventId = eventId;
         this.eventName = eventName;
@@ -72,6 +91,14 @@ public class Event {
 
     public int getHallId() {
         return hallId;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
     }
 }
 
